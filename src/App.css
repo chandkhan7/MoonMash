@@ -159,3 +159,31 @@ p {
 .img-fluid:hover {
   transform: scale(1.05);
 }
+/* Styles for the image upload */
+.card img {
+  transition: transform 0.3s ease-in-out;
+}
+
+.card img:hover {
+  transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
+/* Voting section card hover effect */
+.card {
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+hr {
+  border-top: 2px solid #141412; /* Blue divider line */
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.text-center h3 {
+  font-size: 1.8rem;
+  color: #0d9ab3;
+}

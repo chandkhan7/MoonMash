@@ -164,10 +164,13 @@ const App = () => {
         </div>
       )}
 
-      {/* Show all uploaded images to users, excluding the user's own image */}
-      <div className="row justify-content-center mt-4">
+      {/* Contestants Section */}
+      <div className="text-center mb-4">
+        <h3>CONTESTANTS</h3>
+      </div>
+      <div className="row justify-content-center mt-4 d-flex flex-wrap">
         {images.filter((img) => img.id !== userImage?.id).map((img) => (
-          <div key={img.id} className="col-md-3 text-center mb-4">
+          <div key={img.id} className="col-6 col-md-3 text-center mb-4">
             <div className="card shadow-lg p-3 rounded">
               <img
                 src={img.src}
@@ -186,68 +189,67 @@ const App = () => {
         ))}
       </div>
 
-      {/* Start Voting Button */}
-      {!finalWinner && images.length === 4 && currentPair.length === 0 && (
-        <div className="text-center my-4">
-          <button className="btn btn-success btn-lg" onClick={startVoting}>
-            Start Voting
-          </button>
-        </div>
+      {/* Voting Divider */}
+      {images.length >= 4 && !finalWinner && (
+        <hr />
       )}
 
       {/* Voting Section */}
       {!finalWinner && currentPair.length === 2 && (
-        <div className="row justify-content-center mt-5">
-          {currentPair.map((img) => (
-            <div
-              key={img.id}
-              onClick={() => handleVote(img.id)}
-              className="col-md-4 text-center"
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="card shadow-lg p-4 rounded">
-                <img
-                  src={img.src}
-                  alt={`Image ${img.id}`}
-                  className="img-fluid rounded-circle mb-3"
-                  style={{
-                    width: '200px',
-                    height: '200px',
-                    objectFit: 'cover', // Maintain the image inside the circle
-                    border: '3px solid #007bff', // Optional border for distinction
-                  }}
-                />
-                <p>Wins: {img.wins}</p>
-                <p>Losses: {img.losses}</p>
+        <div className="text-center">
+          <h3>VOTINGS</h3>
+          <div className="row justify-content-center mt-5">
+            {currentPair.map((img) => (
+              <div
+                key={img.id}
+                onClick={() => handleVote(img.id)}
+                className="col-6 col-md-4 text-center"
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="card shadow-lg p-4 rounded">
+                  <img
+                    src={img.src}
+                    alt={`Image ${img.id}`}
+                    className="img-fluid rounded-circle mb-3"
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      objectFit: 'cover', // Maintain the image inside the circle
+                      border: '3px solid #007bff', // Optional border for distinction
+                    }}
+                  />
+                  <p>Wins: {img.wins}</p>
+                  <p>Losses: {img.losses}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {/* Winner Section */}
       {finalWinner && (
         <div className="text-center mt-5">
-          <h2>The Winner is:</h2>
-          <img
-            src={finalWinner.src}
-            alt="Winner"
-            className="img-fluid rounded-circle mb-3"
-            style={{
-              width: '300px',
-              height: '300px',
-              objectFit: 'cover',
-            }}
-          />
-          <p>Image {finalWinner.id}</p>
-          <p>Wins: {finalWinner.wins}</p>
-          <p>Losses: {finalWinner.losses}</p>
+          <h2>The Final Winner is:</h2>
+          <div className="card shadow-lg p-4 rounded" style={{ width: '200px', margin: 'auto' }}>
+            <img
+              src={finalWinner.src}
+              alt={`Winner Image`}
+              className="img-fluid rounded-circle mb-3"
+              style={{
+                width: '200px',
+                height: '200px',
+                objectFit: 'cover',
+              }}
+            />
+            <h4>{`Image with ${finalWinner.wins} wins`}</h4>
+          </div>
         </div>
       )}
 
-      {/* Reset Section */}
+      {/* Reset Button */}
       <div className="text-center mt-5">
-        <button className="btn btn-danger btn-lg" onClick={resetApp}>Reset App</button>
+        <button onClick={resetApp} className="btn btn-danger btn-lg">Reset App</button>
       </div>
     </div>
   );
