@@ -1,38 +1,161 @@
-.App {
+body {
+  background-color: #f8f9fa;
+  font-family: 'Arial', sans-serif;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #343a40;
+}
+/* General Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f8f9fa; /* Light gray background */
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+h1 {
+  font-size: 2.5rem;
   text-align: center;
+  color: #343a40; /* Dark gray */
+  margin-bottom: 20px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Upload Section */
+label.btn {
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  cursor: pointer;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+label.btn:hover {
+  background-color: #007bff;
+  color: white;
+  transition: 0.3s;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+input[type='file'] {
+  display: none;
+}
+
+/* Uploaded Images */
+.d-flex img {
+  border: 3px solid #007bff; /* Bootstrap blue border */
+  border-radius: 10px;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.d-flex img:hover {
+  transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+/* Start Voting Button */
+button.btn-success {
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  transition: 0.3s;
+}
+
+button.btn-success:hover {
+  background-color: #28a745; /* Bootstrap green */
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+/* Voting Section */
+.d-flex div {
+  cursor: pointer;
+  text-align: center;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.d-flex div:hover img {
+  transform: scale(1.05); /* Slight zoom on hover for voting images */
+}
+
+.d-flex div p {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #495057; /* Muted gray text */
+}
+
+/* Winner Section */
+h2 {
+  font-size: 2rem;
+  color: #28a745; /* Bootstrap green */
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.text-center img {
+  max-width: 300px;
+  height: 300px;
+  border: 3px solid #ffc107; /* Gold border for winner */
+  border-radius: 10px;
+}
+
+.text-center p {
+  font-size: 1.1rem;
+  color: #343a40;
+  font-weight: bold;
+}
+/* Custom CSS */
+.card {
+  transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+  padding: 10px;
+}
+
+.card-img-top {
+  transition: all 0.2s ease;
+}
+
+.card-img-top:hover {
+  transform: scale(1.1);
+}
+
+h1, h3 {
+  font-family: 'Arial', sans-serif;
+  color: #343a40;
+}
+
+p {
+  font-family: 'Arial', sans-serif;
+  font-size: 1rem;
+}
+
+.btn-lg {
+  font-size: 1.25rem;
+}
+
+.btn {
+  font-size: 1.1rem;
+}
+
+.img-fluid {
+  transition: all 0.2s ease-in-out;
+}
+
+.img-fluid:hover {
+  transform: scale(1.05);
 }
