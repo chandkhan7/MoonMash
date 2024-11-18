@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+import imageCompression from 'browser-image-compression';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css'; // Custom CSS
-import imageCompression from 'browser-image-compression'; // Import compression library
+import './App.css';
+
+// Connect to the Socket.IO server
+const socket = io('http://localhost:4002'); // Replace with your server's URL
 
 const App = () => {
-  const [images, setImages] = useState([]); // Store images uploaded by users
-  const [queue, setQueue] = useState([]);  // Queue for voting
-  const [currentPair, setCurrentPair] = useState([]); // Current pair of images for voting
-  const [finalWinner, setFinalWinner] = useState(null); // Image with most wins
-  const [userImage, setUserImage] = useState(null); // User's uploaded image (not shown after upload)
+  const [images, setImages] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [currentPair, setCurrentPair] = useState([]);
+  const [finalWinner, setFinalWinner] = useState(null);
+  const [userImage, setUserImage] = useState(null); // User's uploaded image
+  const [uploading, setUploading] = useState(false);
 
-  // Load images from localStorage (for all users to see the same list)
+  // Load images from localStorage
   useEffect(() => {
     const storedImages = JSON.parse(localStorage.getItem('images')) || [];
     setImages(storedImages);
@@ -23,19 +28,38 @@ const App = () => {
     }
   }, [images]);
 
-  // Handle image upload and compress the image
+  // Socket.IO listeners
+  useEffect(() => {
+    // Receive initial data from the server
+    socket.on('initial_data', ({ images, currentPair, finalWinner }) => {
+      setImages(images);
+      setCurrentPair(currentPair);
+      setFinalWinner(finalWinner);
+    });
+
+    // Receive updates from the server
+    socket.on('update_data', ({ images, currentPair, finalWinner }) => {
+      setImages(images);
+      setCurrentPair(currentPair);
+      setFinalWinner(finalWinner);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Handle image upload
   const handleUpload = async (e) => {
     const file = e.target.files[0];
-    
     if (file) {
       try {
         const options = {
-          maxSizeMB: 1, // Set the max size to 1MB (you can adjust this)
-          maxWidthOrHeight: 800, // Max width or height (you can adjust this)
-          useWebWorker: true, // Use web worker for faster compression
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
         };
-
-        // Compress the image
+        setUploading(true);
         const compressedFile = await imageCompression(file, options);
 
         const reader = new FileReader();
@@ -43,18 +67,19 @@ const App = () => {
           const newImage = { id: Date.now(), src: reader.result, wins: 0, losses: 0 };
           const updatedImages = [...images, newImage];
           setImages(updatedImages);
-          setUserImage(newImage); // Set the user's uploaded image to hide after uploading
+          setUserImage(newImage); // Set the user's uploaded image
+          socket.emit('upload_image', newImage); // Notify server
+          setUploading(false);
         };
-        
-        // Read the compressed image as data URL
         reader.readAsDataURL(compressedFile);
       } catch (error) {
-        console.error('Error while compressing image:', error);
+        console.error('Error uploading image:', error);
+        setUploading(false);
       }
     }
   };
 
-  // Start voting once 4 images are uploaded
+  // Start voting
   const startVoting = () => {
     if (images.length === 4) {
       const initialQueue = [...images];
@@ -64,7 +89,7 @@ const App = () => {
     }
   };
 
-  // Handle voting for one of the images
+  // Handle voting
   const handleVote = (selectedId) => {
     const winner = currentPair.find((img) => img.id === selectedId);
     const loser = currentPair.find((img) => img.id !== selectedId);
@@ -81,36 +106,30 @@ const App = () => {
       setCurrentPair([winner, nextImage]);
       setQueue(nextQueue);
     } else {
-      // Check for ties
+      // Check for ties or determine the winner
       const maxWins = Math.max(...images.map((img) => img.wins));
       const potentialWinners = images.filter((img) => img.wins === maxWins);
 
       if (potentialWinners.length > 1) {
-        // Reintroduce tied images into the queue
-        const tiedQueue = potentialWinners.filter(
-          (img) => !currentPair.some((pairImg) => pairImg.id === img.id)
-        );
-        setQueue(tiedQueue);
-        if (tiedQueue.length >= 2) {
-          setCurrentPair([tiedQueue[0], tiedQueue[1]]);
-        }
+        setQueue(potentialWinners);
+        setCurrentPair([potentialWinners[0], potentialWinners[1]]);
       } else {
-        // Declare the final winner
         setFinalWinner(potentialWinners[0]);
         setCurrentPair([]);
       }
     }
   };
 
+  // Automatically start voting when 4 images are uploaded
   useEffect(() => {
     if (images.length >= 4) {
-      startVoting(); // Automatically start voting when 4 images are uploaded
+      startVoting();
     }
   }, [images]);
 
-  // Reset function to clear all data
+  // Reset the app
   const resetApp = () => {
-    localStorage.removeItem('images'); // Clear local storage
+    localStorage.removeItem('images');
     setImages([]);
     setQueue([]);
     setCurrentPair([]);
@@ -128,99 +147,38 @@ const App = () => {
           <div className="col-md-6 text-center">
             <div className="card shadow-sm p-4 rounded">
               <h3 className="mb-3">Upload Your Image</h3>
-              <p className="text-muted">Upload a single image. Voting will begin when 4 images are uploaded.</p>
-              <div className="mb-4">
-                <label className="btn btn-primary btn-lg">
-                  <i className="bi bi-upload"></i> Upload Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
+              <label className="btn btn-primary btn-lg">
+                <i className="bi bi-upload"></i> Upload Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {uploading && (
+                <div className="spinner-border text-primary mt-3" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
-
-      {/* Uploaded Image (User will not see it after upload) */}
-      {userImage && (
-        <div className="text-center mt-4">
-          <h4>You've uploaded your image!</h4>
-          <div className="card shadow-lg p-3 rounded" style={{ width: '200px', margin: 'auto' }}>
-            <img
-              src={userImage.src}
-              alt="Uploaded Image"
-              className="img-fluid rounded-circle mb-3"
-              style={{
-                width: '200px',   // Fixed width for user uploaded image
-                height: '200px',  // Fixed height for user uploaded image
-                objectFit: 'cover', // Maintain image proportions inside the circle
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Contestants Section */}
-      <div className="text-center mb-4">
-        <h3>CONTESTANTS</h3>
-      </div>
-      <div className="row justify-content-center mt-4 d-flex flex-wrap">
-        {images.filter((img) => img.id !== userImage?.id).map((img) => (
-          <div key={img.id} className="col-6 col-md-3 text-center mb-4">
-            <div className="card shadow-lg p-3 rounded">
-              <img
-                src={img.src}
-                alt={`Uploaded Image ${img.id}`}
-                className="img-fluid rounded-circle"
-                style={{
-                  width: '170px',   // Fixed width for all uploaded images
-                  height: '170px',  // Fixed height for all uploaded images
-                  objectFit: 'cover', // Maintain aspect ratio inside the circle
-                }}
-              />
-              <p>Wins: {img.wins}</p>
-              <p>Losses: {img.losses}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Voting Divider */}
-      {images.length >= 4 && !finalWinner && (
-        <hr />
       )}
 
       {/* Voting Section */}
       {!finalWinner && currentPair.length === 2 && (
-        <div className="text-center">
-          <h3>VOTINGS</h3>
-          <div className="row justify-content-center mt-5">
+        <div className="text-center mt-4">
+          <h3>Vote for the Best Image!</h3>
+          <div className="row justify-content-center">
             {currentPair.map((img) => (
-              <div
-                key={img.id}
-                onClick={() => handleVote(img.id)}
-                className="col-6 col-md-4 text-center"
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="card shadow-lg p-4 rounded">
-                  <img
-                    src={img.src}
-                    alt={`Image ${img.id}`}
-                    className="img-fluid rounded-circle mb-3"
-                    style={{
-                      width: '200px',
-                      height: '200px',
-                      objectFit: 'cover', // Maintain the image inside the circle
-                      border: '3px solid #007bff', // Optional border for distinction
-                    }}
-                  />
-                  <p>Wins: {img.wins}</p>
-                  <p>Losses: {img.losses}</p>
-                </div>
+              <div key={img.id} className="col-md-4 text-center" onClick={() => handleVote(img.id)}>
+                <img
+                  src={img.src}
+                  alt="Image for voting"
+                  className="img-fluid rounded-circle mb-3"
+                  style={{ width: '200px', height: '200px', objectFit: 'cover', cursor: 'pointer' }}
+                />
               </div>
             ))}
           </div>
@@ -229,28 +187,19 @@ const App = () => {
 
       {/* Winner Section */}
       {finalWinner && (
-        <div className="text-center mt-5">
-          <h2>The Final Winner is:</h2>
-          <div className="card shadow-lg p-4 rounded" style={{ width: '200px', margin: 'auto' }}>
-            <img
-              src={finalWinner.src}
-              alt={`Winner Image`}
-              className="img-fluid rounded-circle mb-3"
-              style={{
-                width: '200px',
-                height: '200px',
-                objectFit: 'cover',
-              }}
-            />
-            <h4>{`Image with ${finalWinner.wins} wins`}</h4>
-          </div>
+        <div className="text-center mt-4">
+          <h3>Final Winner!</h3>
+          <img
+            src={finalWinner.src}
+            alt="Winner"
+            className="img-fluid rounded-circle"
+            style={{ width: '200px', height: '200px', objectFit: 'cover' }}
+          />
+          <button className="btn btn-danger mt-3" onClick={resetApp}>
+            Reset
+          </button>
         </div>
       )}
-
-      {/* Reset Button */}
-      <div className="text-center mt-5">
-        <button onClick={resetApp} className="btn btn-danger btn-lg">Reset App</button>
-      </div>
     </div>
   );
 };
